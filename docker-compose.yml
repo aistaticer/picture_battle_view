@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  react-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"  # Reactの開発サーバーは3000番ポートを使用
+    volumes:
+      - ./app:/app  # ホストとコンテナのディレクトリを共有
+      - /app/node_modules  # node_modulesは共有しないようにする
+    stdin_open: true
+    tty: true
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      - picture_battle-network
+
+networks:
+  picture_battle-network:
+    external: true
+
