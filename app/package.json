@@ -16,7 +16,8 @@
     "@react-three/fiber": "^9.0.0",
     "@react-three/cannon": "latest",
     "three-bvh-csg": "latest",
-    "three-csg": "^1.0.0"
+    "three-csg": "^1.0.0",
+    "sass": "^1.82.0"
   },
   "scripts": {
     "start": "react-app-rewired start",

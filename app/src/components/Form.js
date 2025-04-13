@@ -1,31 +1,32 @@
 import React, { useState } from 'react';
+import '../sass/form.sass';
 
-function ThemeForm() {
-	const [value ,setValue] = useState('');
 
-	const handleChange = (e) => {
-    setValue(e.target.value); // 入力された値でステートを更新
+function ThemeForm({ theme }) {
+  const [value, setValue] = useState('');
+
+  const handleChange = (e) => {
+    setValue(e.target.value);
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault(); // ページリロードを防ぐ
-    alert(`入力値:${value}`);
+    e.preventDefault();
+    alert(`入力値: ${value}`);
   };
 
-	return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        入力値：
+  return (
+    <form onSubmit={handleSubmit} className='themeForm'>
+
+      <div>
         <input
           type="text"
           value={value}
           onChange={handleChange}
+          className="custom-input"
         />
-      </label>
-      <button type="submit">送信</button>
+      </div>
     </form>
   );
-
 }
 
 export default ThemeForm;

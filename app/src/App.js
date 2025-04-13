@@ -8,6 +8,7 @@ import ReactDOM from "react-dom/client";
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Rotation from './pages/Rotation';
+import "./App.css";
 
 function App() {
   return (
