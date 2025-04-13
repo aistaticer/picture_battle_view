@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import '../sass/form.sass';
+import { useThemeFetcher,useAnswerCheckFetcher } from '../api/themeApi';
 
-
-function ThemeForm({ theme }) {
+function ThemeForm({ theme, onAnswerSubmitted }) {
   const [value, setValue] = useState('');
 
   const handleChange = (e) => {
     setValue(e.target.value);
   };
+  const { answerHandleClick } = useAnswerCheckFetcher();
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    alert(`入力値: ${value}`);
+    answerHandleClick(e, value);
+    setValue(''); 
+    onAnswerSubmitted();
   };
 
   return (

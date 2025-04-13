@@ -26,4 +26,35 @@ function useThemeFetcher() {
 	
 }
 
-export { useThemeFetcher };
+function useAnswerCheckFetcher() {
+  const [data, setData] = useState(null);
+
+  const answerHandleClick = async (e, inputValue) => {
+    e.preventDefault(); // フォーム送信のリロード防止
+    try {
+      const response = await fetch("http://localhost:8080/api/checkAnswer", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          answer: inputValue
+        })
+      });
+
+      const json = await response.json();
+			setData(json);
+      console.log('点数:', json.reward);
+
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return {
+    answerHandleClick,
+    data,
+  };
+}
+
+export { useThemeFetcher,useAnswerCheckFetcher };
