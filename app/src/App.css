@@ -45,10 +45,17 @@ body{
   padding: 0;
 }
 
-.bottomArea{
-  position: absolute;
-  bottom: 0;
-  width: 100%;
+.topArea {
+  height: 10vh;
+  background-color: #b5a8a8;
+}
+
+.centerArea {
+  flex: 1;
+  background-color: #928f8f;
+}
+
+.bottomArea {
   height: 20vh;
   background-color: #f0f0f0;
 }

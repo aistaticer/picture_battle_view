@@ -1,9 +1,11 @@
+import React from 'react';
 import { Canvas } from "@react-three/fiber";
 import { Evaluator, Brush, SUBTRACTION } from "three-bvh-csg";
 import * as THREE from "three";
 import { useRef, useEffect, useState, useLayoutEffect  } from "react";
 import { Physics, useTrimesh} from "@react-three/cannon";
 import ThreeBSP from 'three-csg';
+import {Tile} from "../../components/Object/Tile"
 
 
 function DeformMesh() {
@@ -112,5 +114,46 @@ function createBox({
   return box;
 }
 
+// 🔸 盤面生成ロジック
+const CreateBoard = React.memo(function CreateBoard({ board }) {
+  const tiles = [];
+	console.log("CreateBoard実行");
 
-export { createBox };
+	const height = board.length;
+
+  for (let row = 0; row < height; row++) {
+		let width = board[row].length;
+    for (let col = 0; col < width; col++) {
+			tiles.push(
+        <Tile key={`${row}-${col}`} position={board[row][col].position}  type={board[row][col].type}/>
+      );
+    }
+  }
+
+  return <>{tiles}</>;
+})
+
+// カスタムフック：盤面の状態と操作を管理
+function useBoardState(initialBoard) {
+  const [board, setBoard] = useState(initialBoard);
+
+  // 🔸 ピンポイントでマスを更新する関数
+  const updateTile = (row, col, newTile) => {
+    setBoard(prevBoard => {
+      const newBoard = [...prevBoard];
+      newBoard[row] = [...newBoard[row]];
+      newBoard[row][col] = { ...newTile };
+      return newBoard;
+    });
+  };
+
+  return { board, updateTile };
+}
+
+
+
+
+
+
+
+export { createBox,CreateBoard,useBoardState };
