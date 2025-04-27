@@ -139,6 +139,8 @@ function useBoardState(initialBoard) {
 
   // 🔸 ピンポイントでマスを更新する関数
   const updateTile = (row, col, newTile) => {
+		const sound = new Audio('/sounds/気弾2.mp3');
+		sound.play();
     setBoard(prevBoard => {
       const newBoard = [...prevBoard];
       newBoard[row] = [...newBoard[row]];

@@ -54,6 +54,11 @@ function GameScreen(){
 					<button onClick={() => updateTile(1, 3, { type: 'player1',position: [1,0,3] })}>
 							Change Tile
 					</button>			
+					<button onClick={() => {
+						A()
+					}}>
+						音を鳴らす
+					</button>
 				</div>
 
 	
@@ -64,6 +69,13 @@ function GameScreen(){
 			</div>
 		</div>
 	);
+}
+
+function A(){
+	const sound = new Audio('/sounds/風鈴が鳴る家2.mp3');
+	sound.loop = true;
+	sound.volume = 0.5;
+	sound.play();
 }
 
 const FallingBlock = React.memo(function FallingBlock() {

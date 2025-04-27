@@ -13,6 +13,20 @@ const Tile = React.memo(function Tile({ type, position }) {
     args: [1, 0.2, 1]
   }));
 
+	  // Tile生成時にrefに情報を追加する
+		React.useEffect(() => {
+			if (ref.current) {
+				ref.current.userData = { type, position };
+			}
+		}, [ref, type, position]);
+
+		const handleClick = () => {
+			if (ref.current) {
+				console.log('Clicked Tile Info:', ref.current.userData);
+				// ここでtypeとpositionが取れる！
+			}
+		};	
+	
   const colors = ['#bada55', '#ff6f61', '#6a5acd', '#ffa500', '#20b2aa', '#ff69b4', '#87cefa', '#7fff00', '#dc143c', '#00ced1', '#ff1493', '#1e90ff', '#32cd32', '#9932cc', '#ff4500', '#00fa9a', '#ff6347', '#8a2be2', '#40e0d0', '#f08080'];
   let color = colors[Math.floor(Math.random() * colors.length)];
 
@@ -33,7 +47,7 @@ const Tile = React.memo(function Tile({ type, position }) {
   }
 
   return (
-    <mesh ref={ref} position={position}>
+    <mesh ref={ref} position={position} onClick={handleClick}>
       <boxGeometry args={[1, 0.2, 1]} />
       <meshStandardMaterial color={color} />
     </mesh>
