@@ -116,16 +116,21 @@ function createBox({
 
 // 🔸 盤面生成ロジック
 const CreateBoard = React.memo(function CreateBoard({ board }) {
+
+	if (!board) {
+    return
+  }
+
   const tiles = [];
 	console.log("CreateBoard実行");
-
+	
 	const height = board.length;
 
   for (let row = 0; row < height; row++) {
 		let width = board[row].length;
     for (let col = 0; col < width; col++) {
 			tiles.push(
-        <Tile key={`${row}-${col}`} position={board[row][col].position}  type={board[row][col].type}/>
+        <Tile key={`${row}-${col}`} boardId ={1} position={board[row][col].position}  type={board[row][col].type}/>
       );
     }
   }
@@ -149,7 +154,7 @@ function useBoardState(initialBoard) {
     });
   };
 
-  return { board, updateTile };
+  return { board, setBoard,updateTile };
 }
 
 

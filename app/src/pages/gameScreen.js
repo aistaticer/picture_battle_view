@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ThemeForm from '../components/Form';
 import {useThemeFetcher} from '../api/themeApi'
+import {useBoardInitFetcher} from '../api/gameApi'
 import "../sass/gameScreen.sass"
 import * as THREE from "three";
 import { Canvas, useThree , useFrame} from "@react-three/fiber";
@@ -8,9 +9,13 @@ import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics, useTrimesh, useBox, Debug} from "@react-three/cannon";
 import { CreateBoard, useBoardState} from '../hooks/setObject/setObject';
 import {Tile} from "../components/Object/Tile"
+import { GameProvider,useGame } from '../hooks/useGame';
+import { useBoardStore } from "../store/boardStore";
+import {useBoardSocket} from '../hooks/websocket';
 
 function GameScreen(){
 	const { theme, themeHandleClick } = useThemeFetcher();
+	const { initBoard, fetchBoard } = useBoardInitFetcher();
 	const [shouldFetchTheme, setShouldFetchTheme] = useState(true);
 
   useEffect(() => {
@@ -18,55 +23,70 @@ function GameScreen(){
 			themeHandleClick();
       setShouldFetchTheme(false);
     }
-  }, [shouldFetchTheme]);
+  }, [shouldFetchTheme])
 
-	const initialBoard = [
-    [{ type: 'empty', position: [0,0,0] }, { type: 'empty', position: [1,0,0] },{ type: 'empty', position: [2,0,0] }, { type: 'empty', position: [3,0,0] }],
-		[{ type: 'empty', position: [0,0,1] }, { type: 'player1', position: [1,0,1] },{ type: 'empty', position: [2,0,1] }, { type: 'empty', position: [3,0,1] }],
-		[{ type: 'empty', position: [0,0,2] }, { type: 'empty', position: [1,0,2] },{ type: 'empty', position: [2,0,2] }, { type: 'empty', position: [3,0,2] }],
-		[{ type: 'empty', position: [0,0,3] }, { type: 'empty', position: [1,0,3] },{ type: 'player2', position: [2,0,3] }, { type: 'player2', position: [3,0,3] }],
-  ];
+  useEffect(() => {
+    fetchBoard();
+  }, []);
 
-	const { board, updateTile } = useBoardState(initialBoard);
+	useBoardSocket();
 
+	let initialBoard = initBoard;
+	//console.log(initialBoard);
+	const { board, setBoard, updateTile } = useBoardState(initialBoard);
+
+	const boardSoc = useBoardStore((state) => state.board);
+	const [visible, setVisible] = useState(false); 
+
+	useEffect(() => {
+    setBoard(initialBoard);
+  }, [initialBoard]);
+
+	//console.log(board);
+	
 	return (
 		<div className="gameScreenContainer">
-			<div className='topArea'>
-				ヘッダー
-			</div>
-			<div className='centerArea'>
-				gameScreen画面
+			<GameProvider>
+				<div className='topArea'>
+					ヘッダー
+				</div>
+				<div className='centerArea'>
+					gameScreen画面
 
-				<p>お題: {theme}</p>
-				<div className="canvasArea">
-					<Canvas shadows>
-						<OrbitControls />
+					<p>お題: {theme}</p>
+					<div className="canvasArea">
+					<Canvas frameloop="demand" shadows={false} dpr={[1, 1.5]}>
+							<OrbitControls />
 
-						<ambientLight intensity={1.0} />
-						<directionalLight position={[5, 10, 5]} intensity={1} castShadow />
-						<Physics gravity={[0, -9.81, 0]}>
-							<Debug color="black" scale={1.01}>
-								<FallingBlock/>
-								<CreateBoard board={board}/>
-							</Debug>
-						</Physics>		
-					</Canvas>
-					<button onClick={() => updateTile(1, 3, { type: 'player1',position: [1,0,3] })}>
-							Change Tile
-					</button>			
-					<button onClick={() => {
-						A()
-					}}>
-						音を鳴らす
-					</button>
+							<ambientLight intensity={1.0} />
+							<directionalLight position={[5, 10, 5]} intensity={1} castShadow />
+							<Physics gravity={[0, -9.81, 0]}>
+								<Debug color="black" scale={1.01}>
+									<FallingBlock/>
+									<CreateBoard board={board}/>
+								</Debug>
+							</Physics>		
+						</Canvas>
+						<button onClick={() => updateTile(1, 3, { type: 'player1',position: [1,0,3] })}>
+								Change Tile
+						</button>			
+						<button onClick={() => {
+							A()
+						}}>
+							音を鳴らす
+						</button>
+					</div>
+
+		
 				</div>
 
-	
-			</div>
+				<button onClick={() => setVisible(true)}>Boardを表示</button>
+				<pre>{JSON.stringify(boardSoc, null, 2)}</pre>
 
-			<div className='bottomArea'>
-				<ThemeForm theme={theme} onAnswerSubmitted={() => setShouldFetchTheme(true)} />
-			</div>
+				<div className='bottomArea'>
+					<ThemeForm theme={theme} onAnswerSubmitted={() => setShouldFetchTheme(true)} />
+				</div>
+			</GameProvider>
 		</div>
 	);
 }
