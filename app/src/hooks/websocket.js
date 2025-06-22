@@ -42,11 +42,14 @@ export const useBoardSocket = () => {
 			);
 		}
 
+		// websocketで受け取ったメッセージをBoardに格納
     socket.onmessage = (event) => {
       try {
+				console.log("受信した生データ:", event.data); // JSON文字列
         const data = JSON.parse(event.data);
-					console.log(data);
-          setBoard(data); // Zustandに保存
+				console.log("parseされたデータ",data);
+				
+				setBoard(data); // Zustandに保存
       } catch (err) {
         console.error("Invalid JSON:", err);
       }

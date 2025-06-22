@@ -41,6 +41,9 @@ const Tile = React.memo(function Tile({type, position }) {
     case 'empty':
       color = '#00fa9a';
       break;
+    case 'clicked':
+      color = '#8a2be2';
+      break;
     default:
   }
 
@@ -48,6 +51,8 @@ const Tile = React.memo(function Tile({type, position }) {
     <mesh ref={ref} position={position} 
 			onClick={() => {
 				if (ref.current) {
+          console.log("tileのposition",position);
+          
 					handleTileClick(ref.current.userData);
 				}
 			}}

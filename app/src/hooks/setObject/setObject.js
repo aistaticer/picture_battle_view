@@ -121,6 +121,8 @@ const CreateBoard = React.memo(function CreateBoard({ board }) {
     return
   }
 
+  console.log("盤面生成のboard", board);
+
   const tiles = [];
 	console.log("CreateBoard実行");
 	
@@ -134,6 +136,9 @@ const CreateBoard = React.memo(function CreateBoard({ board }) {
       );
     }
   }
+
+  console.log("盤面生成のboard", board);
+  
 
   return <>{tiles}</>;
 })
@@ -156,11 +161,6 @@ function useBoardState(initialBoard) {
 
   return { board, setBoard,updateTile };
 }
-
-
-
-
-
 
 
 export { createBox,CreateBoard,useBoardState };

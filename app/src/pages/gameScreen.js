@@ -36,6 +36,8 @@ function GameScreen(){
 	const { board, setBoard, updateTile } = useBoardState(initialBoard);
 
 	const boardSoc = useBoardStore((state) => state.board);
+	console.log("screenのboard",boardSoc);
+	
 	const [visible, setVisible] = useState(false); 
 
 	useEffect(() => {
@@ -63,7 +65,7 @@ function GameScreen(){
 							<Physics gravity={[0, -9.81, 0]}>
 								<Debug color="black" scale={1.01}>
 									<FallingBlock/>
-									<CreateBoard board={board}/>
+									{boardSoc && <CreateBoard board={boardSoc.tiles} />}
 								</Debug>
 							</Physics>		
 						</Canvas>
@@ -101,7 +103,7 @@ function A(){
 const FallingBlock = React.memo(function FallingBlock() {
   const [ref] = useBox(() => ({
     mass: 1,
-    position: [3, 5, 0], // 初期位置（高いところから落ちる）,
+    position: [0, 5, 0], // 初期位置（高いところから落ちる）,
 		args: [1, 1, 1]
   }));
 	console.log("createBox rendered");
