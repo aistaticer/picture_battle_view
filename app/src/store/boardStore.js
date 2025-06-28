@@ -4,17 +4,35 @@ import { create } from "zustand";
 export const useBoardStore = create((set, get) => ({
   board: null, // ← 最初は null、後からJSONで更新
   setBoard: (data) => set({ board: data }),
+	tiles: {},
 
-	updateTile: (x, z, newTileData) => {
-		const currentBoard = get().board.tiles.map((row) => [...row]);
-		console.log(currentBoard);
-		console.log("updateTileのx,z",x,z);
-		console.log("storeで受け取ったboard",get().board);
+	setTiles: (tileArray2D) => {
+		const tiles = {};
+		for (const row of tileArray2D) {
+			for (const tile of row) {
+				const key = tile.position.join('-');
+				tiles[key] = tile;
+			}
+		}
+		set({ tiles });
+
+		console.log("保存したtiles:", get().tiles);
+	},
+
+  updateTile: (x, z, newTileData) => {
+    const key = `${x}-0-${z}`; // 例: 3D空間を意識して z軸0
+		console.log("key: ",key);
 		
-    currentBoard[x][z] = { ...currentBoard[x][z], ...newTileData }; // タイル更新
-		console.log("更新後のboard",get().board);
-		set({ board: { ...get().board, tiles: currentBoard } });
-  },
+    set((state) => ({
+      tiles: {
+        ...state.tiles,
+        [key]: {
+          ...state.tiles[key],
+          ...newTileData,
+        },
+      },
+    }));
+	},
 
 	getBoard: () => get().board,
 

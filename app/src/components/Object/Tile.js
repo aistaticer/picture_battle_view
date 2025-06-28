@@ -4,10 +4,21 @@ import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
 import { Physics, useBox } from '@react-three/cannon';
 import { useGameLogic } from '../../hooks/useGameLogic';
+import { useBoardStore } from '../../store/boardStore';
+import shallow from 'zustand/shallow';
 
 // 🔸 物理付き Box
-const Tile = React.memo(function Tile({type, position }) {
-  //console.log("Tile rendered", type);
+/*const Tile = React.memo(function Tile({type, position }) {
+
+  const key = position.join('-')
+  const tile = useBoardStore((s) => s.tiles[key], shallow);
+
+  //console.log("key:",key," type:",type);
+
+  React.useEffect(() => {
+    console.log("Tile component mounted or updated");
+  });
+  
 
 	// 親クラスで作成してpropsで渡した方がいい
 	const { handleTileClick } = useGameLogic();
@@ -61,9 +72,49 @@ const Tile = React.memo(function Tile({type, position }) {
       <meshStandardMaterial color={color} />
     </mesh>
   );
-}, (prevProps, nextProps) => {
-  // positionが変わらなければ再レンダリングしない
-  return prevProps.position === nextProps.position && prevProps.type === nextProps.type;
-});
+}, (prev, next) => (
+  prev.type === next.type &&
+  prev.position?.toString() === next.position?.toString()
+));*/
+
+const Tile = React.memo(function Tile({ position, type, onClick }) {
+
+  console.log("Tile再レンダリング");
+  
+  //const { handleTileClick } = useGameLogic();
+
+  const [ref] = useBox(() => ({
+    mass: 0,
+    position,
+    args: [1, 0.2, 1],
+  }));
+
+  React.useEffect(() => {
+    if (ref.current) {
+      ref.current.userData = { position, type };
+    }
+  }, [ref, position, type]);
+
+  let color = '#00fa9a';
+  if (type === 'player1') color = '#f08080';
+  if (type === 'player2') color = '#87cefa';
+  if (type === 'clicked') color = '#8a2be2';
+
+  return (
+    <mesh
+      ref={ref}
+      position={position}
+      onClick={() => {
+        onClick(ref.current.userData); 
+      }}
+    >
+      <boxGeometry args={[1, 0.2, 1]} />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  );
+}, (prev, next) =>
+  prev.type === next.type &&
+  prev.position?.toString() === next.position?.toString()
+);
 
 export { Tile };

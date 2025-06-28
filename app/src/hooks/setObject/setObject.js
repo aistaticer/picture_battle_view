@@ -6,6 +6,7 @@ import { useRef, useEffect, useState, useLayoutEffect  } from "react";
 import { Physics, useTrimesh} from "@react-three/cannon";
 import ThreeBSP from 'three-csg';
 import {Tile} from "../../components/Object/Tile"
+import { useBoardStore } from '../../store/boardStore';
 
 
 function DeformMesh() {
@@ -114,34 +115,44 @@ function createBox({
   return box;
 }
 
-// 🔸 盤面生成ロジック
-const CreateBoard = React.memo(function CreateBoard({ board }) {
+const CreateBoard2 = () => {
+  const board = useBoardStore((state) => state.board);
+  const setTiles = useBoardStore((state) => state.setTiles);
+  const tileMap = useBoardStore((state) => state.tiles);
 
-	if (!board) {
-    return
-  }
+  useEffect(() => {
+    console.log("useEffect triggered");
+    console.log("board:", board);
 
-  console.log("盤面生成のboard", board);
-
-  const tiles = [];
-	console.log("CreateBoard実行");
-	
-	const height = board.length;
-
-  for (let row = 0; row < height; row++) {
-		let width = board[row].length;
-    for (let col = 0; col < width; col++) {
-			tiles.push(
-        <Tile key={`${row}-${col}`} boardId ={1} position={board[row][col].position}  type={board[row][col].type}/>
-      );
+    if (board?.tiles) {
+      
+      setTiles(board.tiles);
     }
-  }
+  }, [board]);
 
-  console.log("盤面生成のboard", board);
-  
+  return (
+    <>
+      {Object.values(tileMap || {}).map((tile, index) => {
 
-  return <>{tiles}</>;
-})
+        if (!tile || !tile.position) {
+          console.warn(`❗️無効なtileスキップ:`, tile);
+          return null; // 描画しない
+        }
+        const positionKey = tile.position.join('-');
+        const position = tile.position;
+        const type = tile.type;
+
+        return (
+          <Tile
+            key={positionKey}
+            position={position}
+            type={type}
+          />
+        );
+      })}
+    </>
+  );
+};
 
 // カスタムフック：盤面の状態と操作を管理
 function useBoardState(initialBoard) {
@@ -163,4 +174,4 @@ function useBoardState(initialBoard) {
 }
 
 
-export { createBox,CreateBoard,useBoardState };
+export { createBox,useBoardState, CreateBoard2 };
