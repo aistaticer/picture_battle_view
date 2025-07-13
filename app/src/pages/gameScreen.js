@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ThemeForm from '../components/Form';
 import {useThemeFetcher} from '../api/themeApi'
-import {useBoardInitFetcher} from '../api/gameApi'
+import {joinRoom,useBoardInitFetcher} from '../api/gameApi'
 import "../sass/gameScreen.sass"
 import * as THREE from "three";
 import { Canvas, useThree , useFrame} from "@react-three/fiber";
@@ -11,44 +11,23 @@ import { CreateBoard, useBoardState, CreateBoard2} from '../hooks/setObject/setO
 import {Tile} from "../components/Object/Tile"
 //import { GameProvider,useGame } from '../hooks/useGame';
 import { useBoardStore } from "../store/boardStore";
-import {useBoardSocket} from '../hooks/websocket';
+import {useBoardSocket,sendMessageWebsocket} from '../hooks/websocket';
 import { useSocketStore } from "../store/socketStore";
 import { convertTilesTo2DArray } from '../hooks/useGameLogic';
+import { useRewardStore } from '../store/rewardStore';
 
 function GameScreen(){
-	const { theme, themeHandleClick } = useThemeFetcher();
-	const { initBoard, fetchBoard } = useBoardInitFetcher();
-	const [shouldFetchTheme, setShouldFetchTheme] = useState(true);
-	const setTiles = useBoardStore((state) => state.setTiles);
 
-  useEffect(() => {
-    if (shouldFetchTheme) {
-			themeHandleClick();
-      setShouldFetchTheme(false);
-    }
-  }, [shouldFetchTheme])
-
-  useEffect(() => {
-    fetchBoard();		
-  }, []);
+  const [shouldFetchTheme, setShouldFetchTheme] = useState(true);
 
 	useBoardSocket();
 
-	let initialBoard = initBoard;
-	//console.log(initialBoard);
-	const { board, setBoard, updateTile } = useBoardState(initialBoard);
+	console.log("GameScreen");
 
-	const boardSoc = useBoardStore((state) => state.board);
-	console.log("screenのboard",boardSoc);
+
 	
-	const [visible, setVisible] = useState(false); 
+	const theme = useGetTheme(shouldFetchTheme, setShouldFetchTheme);
 
-	useEffect(() => {
-    setBoard(initialBoard);
-  }, [initialBoard]);
-
-	//console.log(board);
-	
 	return (
 		<div className="gameScreenContainer">
 				<div className='topArea'>
@@ -59,6 +38,11 @@ function GameScreen(){
 
 					<p>お題: {theme}</p>
 					<div className="canvasArea">
+
+					{
+						//<SendMessageWebsocket/>
+					}
+
 					<Canvas frameloop="demand" shadows={false} dpr={[1, 1.5]}>
 							<OrbitControls />
 
@@ -67,18 +51,13 @@ function GameScreen(){
 							<Physics gravity={[0, -9.81, 0]}>
 								<Debug color="black" scale={1.01}>
 									<FallingBlock/>
-									{
-										//boardSoc && <CreateBoard board={boardSoc.tiles} />
-										//boardSoc && <CreateBoard2/>
-									}
-									{boardSoc && <CreateBoard3/>}
+
+									{<CreateBoard3/>}
 									
 								</Debug>
 							</Physics>		
-						</Canvas>
-						<button onClick={() => updateTile(1, 3, { type: 'clicked',position: [1,0,3] })}>
-								Change Tile
-						</button>			
+						</Canvas>		
+						<JoinRoomButton token="token"/>
 						<button onClick={() => {
 							A()
 						}}>
@@ -89,8 +68,7 @@ function GameScreen(){
 		
 				</div>
 
-				<button onClick={() => setVisible(true)}>Boardを表示</button>
-				<pre>{JSON.stringify(boardSoc, null, 2)}</pre>
+
 
 				<div className='bottomArea'>
 					<ThemeForm theme={theme} onAnswerSubmitted={() => setShouldFetchTheme(true)} />
@@ -122,51 +100,77 @@ const FallingBlock = React.memo(function FallingBlock() {
   );
 })
 
+function useGetTheme(shouldFetchTheme, setShouldFetchTheme) {
+  const { theme, themeHandleClick } = useThemeFetcher();
+
+  useEffect(() => {
+    if (shouldFetchTheme) {
+      themeHandleClick();
+      setShouldFetchTheme(false);
+    }
+  }, [shouldFetchTheme, themeHandleClick]);
+
+  return theme;
+}
+
+// サーバーから渡されたJsonデータをもとにBoaradを画面に描画する関数
 const CreateBoard3 = () => {
 	const board = useBoardStore((state) => state.board);
-	const setTiles = useBoardStore((state) => state.setTiles);
 	const socket = useSocketStore((state) => state.socket);
+	const setTiles = useBoardStore((state) => state.setTiles);
   const updateTile = useBoardStore((state) => state.updateTile);
   const tiles = useBoardStore((state) => state.tiles);
+	const reward = useRewardStore(state => state.reward);
+	const setReward = useRewardStore(state => state.setReward);
 
-	console.log(tiles);
+	console.log("CreateBoard3");
 	
-	if(tiles) {convertTilesTo2DArray(tiles)}
+	//if(!board) {return}
 	
-  const handleTileClick = (userData) => {
-    updateTile(userData.position[0], userData.position[2], { type: "clicked" });
-  };
+	useEffect(() => {
+		console.log(reward);
+	}, [reward]);
 
-	  useEffect(() => {
-    if (!socket) {
-      return;
-    }
+	const tile2DArray = useMemo(() => convertTilesTo2DArray(tiles), [tiles]);
 
-    console.log("useGameLogic send実行");
-
-    socket.send(JSON.stringify({
-      type: "board",
-      action: "save",
-      payload: {
-        boardId: "1",
-        tiles: convertTilesTo2DArray(tiles),
-      },
-    }));
+	useEffect(() => {		
+		if (tiles && Object.keys(tiles).length > 0) {
+			sendMessageWebsocket(socket,tile2DArray);
+		}
   }, [tiles]);
+	
+	// タイルをクリックした際にタイルの情報を更新するイベントを定義
+	const handleTileClick = useCallback((userData) => {
+		console.log(reward);
+		const currentReward = useRewardStore.getState().reward;
+		
+		if (currentReward > 0) {
+			updateTile(userData.position[0], userData.position[2], { type: "clicked" });
+
+			setReward(currentReward - 1);
+		} else {
+			console.log("クリック回数の上限に達しました");
+		}
+	});
 
   useEffect(() => {
     if (board?.tiles) {
+			// boardのtilesをpositionをもとにdictionary型に変換
       setTiles(board.tiles);
     }
   }, []);
 	
+	// tilesオブジェクトのキー（tileKey）一覧をメモ化して取得
+	// tilesが変更されたときだけ再計算される
   const tileKeys = useMemo(() => Object.keys(tiles || {}), [tiles]);
-	
+
   return (
     <>
-      {tileKeys.map(key => (
-        <TileWrapper key={key} tileKey={key} onClick={handleTileClick}/>
-      ))}
+      {
+				tileKeys.map(key => (
+        	<TileWrapper key={key} tileKey={key} onClick={handleTileClick}/>
+      	))
+			}
     </>
   );
 };
@@ -184,6 +188,20 @@ const TileWrapper = React.memo(({ tileKey, onClick }) => {
     />
   );
 });
+
+const JoinRoomButton = ({ token}) => {
+  const handleJoin = async () => {
+    try {
+      const result = await joinRoom(token);
+      console.log('ルームに参加しました:', result.roomId);
+			localStorage.setItem("roomId", result.roomId);
+    } catch (err) {
+			console.log("ルーム参加に失敗しました");
+    }
+  };
+
+  return <button onClick={handleJoin}>ルームに参加</button>;
+};
 
 
 export default GameScreen;

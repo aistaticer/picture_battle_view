@@ -79,9 +79,7 @@ import shallow from 'zustand/shallow';
 
 const Tile = React.memo(function Tile({ position, type, onClick }) {
 
-  console.log("Tile再レンダリング");
-  
-  //const { handleTileClick } = useGameLogic();
+  console.log("Tile描画");
 
   const [ref] = useBox(() => ({
     mass: 0,

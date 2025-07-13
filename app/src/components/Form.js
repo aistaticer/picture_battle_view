@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import '../sass/form.sass';
 import { useThemeFetcher,useAnswerCheckFetcher } from '../api/themeApi';
 
-function ThemeForm({ theme, onAnswerSubmitted }) {
+function ThemeForm({ theme, onAnswerSubmitted}) {
+  console.log("ThemeForm");
+  
   const [value, setValue] = useState('');
 
   const handleChange = (e) => {
     setValue(e.target.value);
   };
+
   const { answerHandleClick } = useAnswerCheckFetcher();
 
   const handleSubmit = (e) => {

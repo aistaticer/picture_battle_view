@@ -20,6 +20,7 @@ export const useBoardStore = create((set, get) => ({
 	},
 
   updateTile: (x, z, newTileData) => {
+		console.log("updateTile");
     const key = `${x}-0-${z}`; // 例: 3D空間を意識して z軸0
 		console.log("key: ",key);
 		

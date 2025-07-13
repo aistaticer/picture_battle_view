@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRewardStore } from '../store/rewardStore';
 
 function useThemeFetcher() {
 	const [theme, setTheme] = useState(null);
@@ -26,8 +27,13 @@ function useThemeFetcher() {
 	
 }
 
+/**
+ * サーバーに回答を送り、報酬（点数）を取得するカスタムフック
+ * @returns {Object} answerHandleClick 関数などを含むオブジェクト
+ */
 function useAnswerCheckFetcher() {
   const [data, setData] = useState(null);
+  const setReward = useRewardStore(state => state.setReward);
 
   const answerHandleClick = async (e, inputValue) => {
     e.preventDefault(); // フォーム送信のリロード防止
@@ -45,6 +51,7 @@ function useAnswerCheckFetcher() {
       const json = await response.json();
 			setData(json);
       console.log('点数:', json.reward);
+      setReward(json.reward);
 
     } catch (e) {
       console.error(e);

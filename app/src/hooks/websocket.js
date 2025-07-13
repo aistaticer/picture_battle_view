@@ -2,8 +2,9 @@
 import { useEffect, useRef } from "react";
 import { useBoardStore } from "../store/boardStore";
 import { useSocketStore } from "../store/socketStore";
+import { convertTilesTo2DArray } from "./useGameLogic";
 
-export const useBoardSocket = () => {
+const useBoardSocket = () => {
   const socketRef = useRef(null);
   const setBoard = useBoardStore((state) => state.setBoard);
 	const setSocket = useSocketStore((state) => state.setSocket);
@@ -70,3 +71,24 @@ export const useBoardSocket = () => {
 
   return socketRef;
 };
+
+// WebSocketでboardの情報をサーバー側に送信する
+const sendMessageWebsocket = (socket, tiles) => {
+	console.log("SendMessageWebsocket");
+
+	if (!socket) return;
+
+	socket.send(JSON.stringify({
+		type: "board",
+		action: "save",
+		payload: {
+			roomId: "1",
+			board: {
+				boardId: "1",
+				tiles: tiles
+			}
+		},
+	}));
+}
+
+export { useBoardSocket,sendMessageWebsocket };

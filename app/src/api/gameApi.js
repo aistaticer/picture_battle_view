@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 function useBoardInitFetcher() {
 
@@ -20,4 +21,17 @@ function useBoardInitFetcher() {
   return { initBoard, fetchBoard };
 }
 
-export { useBoardInitFetcher };
+const joinRoom = async (token) => {
+  const API_BASE_URL = 'http://localhost:8080/api'; // Spring Bootのエンドポイントなど
+  try {
+    const response = await axios.post(`${API_BASE_URL}/getUserId`, {
+      token: token
+    });
+    return response.data; // 例: { roomId: "room-123" }
+  } catch (error) {
+    console.error('ルーム参加失敗:', error);
+    throw error;
+  }
+};
+
+export { joinRoom, useBoardInitFetcher };

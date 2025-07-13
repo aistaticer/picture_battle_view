@@ -3,8 +3,11 @@ import { sendClickInfo } from "../api/gameApi";
 import { useSocketStore } from "../store/socketStore";
 import { useBoardStore } from "../store/boardStore";
 
-
 function convertTilesTo2DArray(tilesDict) {
+  console.log("convertTilesTo2DArray");
+  
+  console.log('props:', tilesDict);
+
   const tileArray = Object.values(tilesDict);
   const grouped = {};
 
