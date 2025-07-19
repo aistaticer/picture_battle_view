@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ThemeForm from '../components/Form';
 import {useThemeFetcher} from '../api/themeApi'
-import {joinRoom,useBoardInitFetcher} from '../api/gameApi'
+import {startGame,useBoardInitFetcher} from '../api/gameApi'
 import "../sass/gameScreen.sass"
 import * as THREE from "three";
 import { Canvas, useThree , useFrame} from "@react-three/fiber";
@@ -57,7 +57,8 @@ function GameScreen(){
 								</Debug>
 							</Physics>		
 						</Canvas>		
-						<JoinRoomButton token="token"/>
+						<StartGameButton token="token"/>
+
 						<button onClick={() => {
 							A()
 						}}>
@@ -153,12 +154,13 @@ const CreateBoard3 = () => {
 		}
 	});
 
+  // gameがstartしたタイミングのみ動く
   useEffect(() => {
     if (board?.tiles) {
 			// boardのtilesをpositionをもとにdictionary型に変換
       setTiles(board.tiles);
     }
-  }, []);
+  }, [board]);
 	
 	// tilesオブジェクトのキー（tileKey）一覧をメモ化して取得
 	// tilesが変更されたときだけ再計算される
@@ -189,10 +191,10 @@ const TileWrapper = React.memo(({ tileKey, onClick }) => {
   );
 });
 
-const JoinRoomButton = ({ token}) => {
+const StartGameButton = ({ token}) => {
   const handleJoin = async () => {
     try {
-      const result = await joinRoom(token);
+      const result = await startGame(token);
       console.log('ルームに参加しました:', result.roomId);
 			localStorage.setItem("roomId", result.roomId);
     } catch (err) {

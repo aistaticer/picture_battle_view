@@ -5,6 +5,7 @@ import { useSocketStore } from "../store/socketStore";
 import { convertTilesTo2DArray } from "./useGameLogic";
 
 const useBoardSocket = () => {
+	console.log("useBoardSocket");
   const socketRef = useRef(null);
   const setBoard = useBoardStore((state) => state.setBoard);
 	const setSocket = useSocketStore((state) => state.setSocket);
@@ -20,24 +21,11 @@ const useBoardSocket = () => {
       // 送信例（接続時に board 情報をリクエスト）
       socket.send(
 				JSON.stringify({
-					type: "board",
-					action: "get",
+					type: "game",
+					action: "start",
 					payload: {
-						boardId: "1",
-						tiles: [
-							[
-								{
-									type: "enemy",
-									position: [0, 0],
-								}
-							],
-							[
-								{
-									type: "water",
-									position: [0, 1],
-								}
-							]
-						]
+						roomId: localStorage.getItem("roomId"),
+						boardId: "1"
 					}
 				})
 			);
@@ -46,11 +34,11 @@ const useBoardSocket = () => {
 		// websocketで受け取ったメッセージをBoardに格納
     socket.onmessage = (event) => {
       try {
-				console.log("受信した生データ:", event.data); // JSON文字列
+        console.log("受信した生データ:", event.data); // JSON文字列
         const data = JSON.parse(event.data);
-				console.log("parseされたデータ",data);
-				
-				setBoard(data); // Zustandに保存
+        console.log("parseされたデータ",data);
+
+        setBoard(data); // Zustandに保存
       } catch (err) {
         console.error("Invalid JSON:", err);
       }
@@ -82,7 +70,7 @@ const sendMessageWebsocket = (socket, tiles) => {
 		type: "board",
 		action: "save",
 		payload: {
-			roomId: "1",
+			roomId: localStorage.getItem("roomId"),
 			board: {
 				boardId: "1",
 				tiles: tiles

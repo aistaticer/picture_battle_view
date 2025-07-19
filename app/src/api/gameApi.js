@@ -21,10 +21,10 @@ function useBoardInitFetcher() {
   return { initBoard, fetchBoard };
 }
 
-const joinRoom = async (token) => {
+const startGame = async (token) => {
   const API_BASE_URL = 'http://localhost:8080/api'; // Spring Bootのエンドポイントなど
   try {
-    const response = await axios.post(`${API_BASE_URL}/getUserId`, {
+    const response = await axios.post(`${API_BASE_URL}/startGame`, {
       token: token
     });
     return response.data; // 例: { roomId: "room-123" }
@@ -34,4 +34,4 @@ const joinRoom = async (token) => {
   }
 };
 
-export { joinRoom, useBoardInitFetcher };
+export { startGame, useBoardInitFetcher };
