@@ -10,7 +10,7 @@ import { Physics, useTrimesh, useBox, Debug} from "@react-three/cannon";
 import { CreateBoard, useBoardState, CreateBoard2} from '../hooks/setObject/setObject';
 import {Tile} from "../components/Object/Tile"
 //import { GameProvider,useGame } from '../hooks/useGame';
-import { useBoardStore } from "../store/boardStore";
+import { useBoardStore,updateBoardFromServer,updateBoardFromUser } from "../store/boardStore";
 import {useBoardSocket,sendMessageWebsocket} from '../hooks/websocket';
 import { useSocketStore } from "../store/socketStore";
 import { convertTilesTo2DArray } from '../hooks/useGameLogic';
@@ -136,17 +136,20 @@ const CreateBoard3 = () => {
 
 	useEffect(() => {		
 		if (tiles && Object.keys(tiles).length > 0) {
-			sendMessageWebsocket(socket,tile2DArray);
+			//sendMessageWebsocket(socket,tile2DArray);
 		}
   }, [tiles]);
 	
 	// タイルをクリックした際にタイルの情報を更新するイベントを定義
-	const handleTileClick = useCallback((userData) => {
+	const handleTileClick = useCallback((tile) => {
 		console.log(reward);
 		const currentReward = useRewardStore.getState().reward;
 		
 		if (currentReward > 0) {
-			updateTile(userData.position[0], userData.position[2], { type: "clicked" });
+			//updateTile(userData.position[0], userData.position[2], { type: "clicked" });
+      console.log(tile);
+      
+      updateBoardFromUser(tile,"clicked");
 
 			setReward(currentReward - 1);
 		} else {

@@ -51,4 +51,13 @@ function KeyboardControls( api ) {
   return null;
 }
 
-export {useControls,KeyboardControls};
+function getOrCreateUserId() {
+  let userId = localStorage.getItem('userId');
+  if (!userId) {
+    userId = crypto.randomUUID(); // または uuid ライブラリ
+    localStorage.setItem('userId', userId);
+  }
+  return userId;
+}
+
+export {getOrCreateUserId,useControls,KeyboardControls};

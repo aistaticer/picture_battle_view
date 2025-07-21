@@ -1,8 +1,9 @@
 // hooks/useBoardSocket.js
 import { useEffect, useRef } from "react";
-import { useBoardStore } from "../store/boardStore";
+import { useBoardStore, updateBoardFromServer } from "../store/boardStore";
 import { useSocketStore } from "../store/socketStore";
 import { convertTilesTo2DArray } from "./useGameLogic";
+import { getOrCreateUserId } from "./userController/userController";
 
 const useBoardSocket = () => {
 	console.log("useBoardSocket");
@@ -11,7 +12,10 @@ const useBoardSocket = () => {
 	const setSocket = useSocketStore((state) => state.setSocket);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8080/ws");
+    console.log("useBoardSocket webSocket");
+    const userId = getOrCreateUserId();
+    
+    const socket = new WebSocket(`ws://localhost:8080/ws?userId=${userId}`);
     socketRef.current = socket;
 		setSocket(socket);
 
@@ -25,7 +29,8 @@ const useBoardSocket = () => {
 					action: "start",
 					payload: {
 						roomId: localStorage.getItem("roomId"),
-						boardId: "1"
+						boardId: "1",
+            userId: "1"
 					}
 				})
 			);
@@ -38,7 +43,15 @@ const useBoardSocket = () => {
         const data = JSON.parse(event.data);
         console.log("parseされたデータ",data);
 
-        setBoard(data); // Zustandに保存
+        if (data.type === "game" && data.action === "start") {
+          setBoard(data.board);
+        }else if (data.type === "server" && data.action === "send") {
+          console.log("server send確認");
+          console.log(data.tileDTO);
+
+          // ここは更新されたtileじゃないとダメなのにboard渡しちゃってる
+          updateBoardFromServer(data.tileDTO,"clicked");
+        }
       } catch (err) {
         console.error("Invalid JSON:", err);
       }
@@ -71,6 +84,7 @@ const sendMessageWebsocket = (socket, tiles) => {
 		action: "save",
 		payload: {
 			roomId: localStorage.getItem("roomId"),
+      senderId: localStorage.getItem("userId"), 
 			board: {
 				boardId: "1",
 				tiles: tiles
@@ -79,4 +93,21 @@ const sendMessageWebsocket = (socket, tiles) => {
 	}));
 }
 
-export { useBoardSocket,sendMessageWebsocket };
+// WebSocketでboardの情報をサーバー側に送信する
+const sendUpdateTileWebsocket = (socket, updatetile) => {
+	console.log("sendUpdateTileWebsocket");
+
+	if (!socket) return;
+
+	socket.send(JSON.stringify({
+		type: "board",
+		action: "updateTile",
+		payload: {
+			roomId: localStorage.getItem("roomId"),
+      senderId: localStorage.getItem("userId"), 
+			updateTile: updatetile
+		},
+	}));
+}
+
+export { useBoardSocket,sendMessageWebsocket, sendUpdateTileWebsocket };
