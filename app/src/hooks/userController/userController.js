@@ -55,6 +55,9 @@ function getOrCreateUserId() {
   let userId = localStorage.getItem('userId');
   if (!userId) {
     userId = crypto.randomUUID(); // または uuid ライブラリ
+    
+    // 仮でDBに登録したUserIdを格納　いつか消す
+    userId = "88bfbd90-9065-49ef-af81-68db708a4043"
     localStorage.setItem('userId', userId);
   }
   return userId;

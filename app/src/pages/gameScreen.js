@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback , useRef} from 'react';
 import ThemeForm from '../components/Form';
 import {useThemeFetcher} from '../api/themeApi'
 import {startGame,useBoardInitFetcher} from '../api/gameApi'
@@ -10,7 +10,7 @@ import { Physics, useTrimesh, useBox, Debug} from "@react-three/cannon";
 import { CreateBoard, useBoardState, CreateBoard2} from '../hooks/setObject/setObject';
 import {Tile} from "../components/Object/Tile"
 //import { GameProvider,useGame } from '../hooks/useGame';
-import { useBoardStore,updateBoardFromServer,updateBoardFromUser } from "../store/boardStore";
+import { useBoardStore,updateBoardFromServer,updateBoardFromUser,createUpdatedTile } from "../store/boardStore";
 import {useBoardSocket,sendMessageWebsocket} from '../hooks/websocket';
 import { useSocketStore } from "../store/socketStore";
 import { convertTilesTo2DArray } from '../hooks/useGameLogic';
@@ -101,6 +101,22 @@ const FallingBlock = React.memo(function FallingBlock() {
   );
 })
 
+const FallingBlock2 = React.memo(function FallingBlock2({ position }) {
+  const [ref] = useBox(() => ({
+    mass: 0,
+    position: position, // 初期位置（高いところから落ちる）,
+		args: [1.01, 0.5, 1.01]
+  }));
+	console.log("createBox rendered");
+
+  return (
+    <mesh ref={ref}>
+      <boxGeometry args={[1.01, 0.5, 1.01]} />
+      <meshStandardMaterial color="red" transparent opacity={0.5} />
+    </mesh>
+  );
+})
+
 function useGetTheme(shouldFetchTheme, setShouldFetchTheme) {
   const { theme, themeHandleClick } = useThemeFetcher();
 
@@ -123,39 +139,61 @@ const CreateBoard3 = () => {
   const tiles = useBoardStore((state) => state.tiles);
 	const reward = useRewardStore(state => state.reward);
 	const setReward = useRewardStore(state => state.setReward);
+	const [clickableMap, setClickableMap] = useState(new Map()); 
 
 	console.log("CreateBoard3");
 	
-	//if(!board) {return}
-	
-	useEffect(() => {
-		console.log(reward);
-	}, [reward]);
-
-	const tile2DArray = useMemo(() => convertTilesTo2DArray(tiles), [tiles]);
-
-	useEffect(() => {		
-		if (tiles && Object.keys(tiles).length > 0) {
-			//sendMessageWebsocket(socket,tile2DArray);
-		}
-  }, [tiles]);
-	
 	// タイルをクリックした際にタイルの情報を更新するイベントを定義
-	const handleTileClick = useCallback((tile) => {
+	/*const handleTileClick = useCallback((tile) => {
 		console.log(reward);
 		const currentReward = useRewardStore.getState().reward;
 		
 		if (currentReward > 0) {
-			//updateTile(userData.position[0], userData.position[2], { type: "clicked" });
-      console.log(tile);
-      
-      updateBoardFromUser(tile,"clicked");
+
+			setClickableMap(getAdjacentNonClickedTiles(board,tile.position, clickableMap))
+			console.log("ここ" + JSON.stringify(clickableMap));
+
+      updateBoardFromUser(createUpdatedTile(tile,"clicked"),"clicked");
 
 			setReward(currentReward - 1);
 		} else {
 			console.log("クリック回数の上限に達しました");
 		}
-	});
+	});*/
+
+	/*const handleTileClick = useCallback((tile) => {
+
+		const currentReward = useRewardStore.getState().reward;
+		if (currentReward > 0) {
+			setClickableMap(prevMap => {
+				const newMap = getAdjacentNonClickedTiles(tiles, tile.position, prevMap);
+				return newMap;
+			});
+			updateBoardFromUser(createUpdatedTile(tile, "clicked"), "clicked");
+			setReward(currentReward - 1);
+		}
+	}, [tiles, clickableMap]);*/
+
+	const tilesRef = useRef(tiles);
+	useEffect(() => {
+		tilesRef.current = tiles;
+	}, [tiles]);
+
+	const handleTileClick = useCallback((tile) => {
+		const currentReward = useRewardStore.getState().reward;
+		if (currentReward > 0) {
+			setClickableMap(prevMap => {
+				const newMap = getAdjacentNonClickedTiles(tilesRef.current, tile.position, prevMap);
+				console.log(newMap);
+				
+				return newMap;
+			});
+			updateBoardFromUser(createUpdatedTile(tile, "clicked"), "clicked");
+			setReward(currentReward - 1);
+		}
+	}, []);
+
+	
 
   // gameがstartしたタイミングのみ動く
   useEffect(() => {
@@ -164,6 +202,17 @@ const CreateBoard3 = () => {
       setTiles(board.tiles);
     }
   }, [board]);
+
+	const isFirstRun = React.useRef(true);
+
+	useEffect(() => {
+		
+		if (isFirstRun.current && tiles) {
+			const newMap = getFirstAdjacentNonClickedTiles(tiles, clickableMap);
+			setClickableMap(newMap);
+			isFirstRun.current = false;
+		}
+	}, [tiles]);
 	
 	// tilesオブジェクトのキー（tileKey）一覧をメモ化して取得
 	// tilesが変更されたときだけ再計算される
@@ -176,6 +225,15 @@ const CreateBoard3 = () => {
         	<TileWrapper key={key} tileKey={key} onClick={handleTileClick}/>
       	))
 			}
+
+			{Array.from(clickableMap).map(([key, value]) => {
+				return (
+					<FallingBlock2 
+						key={key} 
+						position={value.position} 
+					/>
+				);
+			})}
     </>
   );
 };
@@ -207,6 +265,89 @@ const StartGameButton = ({ token}) => {
 
   return <button onClick={handleJoin}>ルームに参加</button>;
 };
+
+function getAdjacentNonClickedTiles(tiles, position, clickableMap) {
+  const [x, y, z] = position;
+  
+  const directions = [
+    [1, 0, 0], //+x 右
+    [-1, 0, 0], //-x 左
+    [0, 0, 1], //+z 上
+    [0, 0, -1] //-z 下
+  ];
+	
+
+  const resultMap = new Map(clickableMap);;
+	const clickKey = `${x}-${y}-${z}`;
+	const clickTile = tiles[clickKey];
+	if(true/*clickTile && clickTile.type === "clicked"*/){
+		console.log("クリックしたタイルはmapから削除"+clickKey);
+		resultMap.delete(clickKey);
+	}
+	
+  for (const [dx, dy, dz] of directions) {
+    const nx = x + dx;
+    const ny = y + dy;
+    const nz = z + dz;
+
+
+    const key = `${nx}-${ny}-${nz}`;
+    if (resultMap.has(key)) continue; // すでに存在してたらスキップ
+
+    const tile = tiles[key];
+
+    if (tile && tile.type !== "clicked") {
+			//console.log(JSON.stringify(tile.type));
+			//console.log(JSON.stringify(tile));
+      resultMap.set(key, { position: [nx, ny, nz], tile });
+    }
+  }
+
+		//console.log("clickableMap" + JSON.stringify(clickableMap));
+		console.log("resultMap", Array.from(resultMap.entries()));
+
+		
+
+  return resultMap;
+}
+
+function getFirstAdjacentNonClickedTiles(tiles, clickableMap) {
+
+	console.log("getFirstAdjacentNonClickedTiles");
+  
+  const directions = [
+    [1, 0, 0], //+x 右
+    [-1, 0, 0], //-x 左
+    [0, 0, 1], //+z 上
+    [0, 0, -1] //-z 下
+  ];
+
+  const resultMap = new Map(clickableMap);
+
+	for (const [key, tile] of Object.entries(tiles)) {
+		
+  	if (tile.type === "clicked") {
+		  const [x, y, z] = tile.position;
+
+			for (const [dx, dy, dz] of directions) {
+				const nx = x + dx;
+				const ny = y + dy;
+				const nz = z + dz;
+
+				const key = `${nx}-${ny}-${nz}`;
+				if (resultMap.has(key)) continue; // すでに存在してたらスキップ
+
+				const tile = tiles[key];
+				if (tile && tile.type !== "clicked") {
+					
+					resultMap.set(key, { position: [nx, ny, nz], tile });
+				}
+			}
+		}
+	}
+
+  return resultMap;
+}
 
 
 export default GameScreen;

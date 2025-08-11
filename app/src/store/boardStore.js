@@ -8,25 +8,17 @@ import { useSocketStore } from "../store/socketStore";
 const useBoardStore = create((set, get) => ({
   board: null, // ← 最初は null、後からJSONで更新
   setBoard: (data) => set({ board: data }),
-	tiles: {},
+	tiles: null,
 
-	setTiles: (tileArray2D) => {
-		const tiles = {};
-		for (const row of tileArray2D) {
-			for (const tile of row) {
-				const key = tile.position.join('-');
-				tiles[key] = tile;
-			}
-		}
-		set({ tiles });
-
-		console.log("保存したtiles:", get().tiles);
-	},
+	setTiles: (tileMap) => {
+    set({ tiles: tileMap });
+    //console.log("保存したtiles:", Array.from(get().tiles.entries()));
+  },
 
   updateTile: (x, z, newTileData) => {
 		console.log("updateTile");
+		
     const key = `${x}-0-${z}`; // 例: 3D空間を意識して z軸0
-		console.log("key: ",key);
 		
     set((state) => ({
       tiles: {
@@ -37,6 +29,11 @@ const useBoardStore = create((set, get) => ({
         },
       },
     }));
+
+
+		//console.log(get().board);
+		//console.log(get().board.tiles);
+		
 	},
 
 	getBoard: () => get().board,
@@ -51,17 +48,25 @@ function updateBoardFromUser(tile,type) {
   updateBoard(tile, type, { origin: "user" });
 }
 
-function updateBoard(updateTile, type, { origin }) {
-	console.log("updateBoardFromServer に渡ってきた tile:", updateTile);
-	const socket = useSocketStore.getState().socket;
-	useBoardStore.getState().updateTile(updateTile.position[0], updateTile.position[2], { type: type });
+function createUpdatedTile(tile,type){
+	const key = tile.position[0] + "-" + tile.position[1] + "-" +tile.position[2];
+	const currentTile = useBoardStore.getState().tiles[key];
 
-	//const tile2DArray = convertTilesTo2DArray(useBoardStore.getState().tiles);
+	const updatedTile = {
+	  ...currentTile,
+  	type: type,
+	};
+	return updatedTile;
+}
+
+function updateBoard(tile, type, { origin }) {
+	const socket = useSocketStore.getState().socket;
 	
+	useBoardStore.getState().updateTile(tile.position[0], tile.position[2], { type: type });
+
   if (origin === "user") {
-    //sendMessageWebsocket(socket,tile2DArray);
-		sendUpdateTileWebsocket(socket,updateTile);
+		sendUpdateTileWebsocket(socket,tile);
   }
 }
 
-export {useBoardStore,updateBoardFromServer,updateBoardFromUser};
+export {useBoardStore,updateBoardFromServer,updateBoardFromUser,createUpdatedTile};

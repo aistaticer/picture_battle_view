@@ -26,10 +26,10 @@ const useBoardSocket = () => {
       socket.send(
 				JSON.stringify({
 					type: "game",
-					action: "start",
+					action: "join",
 					payload: {
 						roomId: localStorage.getItem("roomId"),
-						boardId: "1",
+						boardId: "board1",
             userId: "1"
 					}
 				})
@@ -43,14 +43,15 @@ const useBoardSocket = () => {
         const data = JSON.parse(event.data);
         console.log("parseされたデータ",data);
 
-        if (data.type === "game" && data.action === "start") {
+        if (data.type === "game" && data.action === "join") {
+          console.log("受け取ったboard",data.board);
+          
           setBoard(data.board);
         }else if (data.type === "server" && data.action === "send") {
           console.log("server send確認");
-          console.log(data.tileDTO);
+          console.log(data.updateTile);
 
-          // ここは更新されたtileじゃないとダメなのにboard渡しちゃってる
-          updateBoardFromServer(data.tileDTO,"clicked");
+          updateBoardFromServer(data.updateTile,"clicked");
         }
       } catch (err) {
         console.error("Invalid JSON:", err);
@@ -104,7 +105,8 @@ const sendUpdateTileWebsocket = (socket, updatetile) => {
 		action: "updateTile",
 		payload: {
 			roomId: localStorage.getItem("roomId"),
-      senderId: localStorage.getItem("userId"), 
+      senderId: localStorage.getItem("userId"),
+      boardId: "board1", 
 			updateTile: updatetile
 		},
 	}));
