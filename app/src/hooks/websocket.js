@@ -1,8 +1,9 @@
 // hooks/useBoardSocket.js
 import { useEffect, useRef } from "react";
-import { useBoardStore, updateBoardFromServer } from "../store/boardStore";
+//import { useBoardStore, updateBoardFromServer } from "../store/boardStore";
+import { useBoardStore, updateBoardFromServer } from "../moc/moc_boardStore";
+
 import { useSocketStore } from "../store/socketStore";
-import { convertTilesTo2DArray } from "./useGameLogic";
 import { getOrCreateUserId } from "./userController/userController";
 
 const useBoardSocket = () => {
@@ -28,7 +29,7 @@ const useBoardSocket = () => {
 					type: "game",
 					action: "join",
 					payload: {
-						roomId: localStorage.getItem("roomId"),
+						gameId: localStorage.getItem("gameId"),
 						boardId: "board1",
             userId: "1"
 					}
@@ -84,7 +85,7 @@ const sendMessageWebsocket = (socket, tiles) => {
 		type: "board",
 		action: "save",
 		payload: {
-			roomId: localStorage.getItem("roomId"),
+			gameId: localStorage.getItem("gameId"),
       senderId: localStorage.getItem("userId"), 
 			board: {
 				boardId: "1",
@@ -94,7 +95,11 @@ const sendMessageWebsocket = (socket, tiles) => {
 	}));
 }
 
-// WebSocketでboardの情報をサーバー側に送信する
+/**
+ * WebSocketでboardの情報をサーバー側に送信する
+ * @param {*} socket WebSocketのインスタンス
+ * @param {*} updatetile 更新されるタイルの情報
+ */
 const sendUpdateTileWebsocket = (socket, updatetile) => {
 	console.log("sendUpdateTileWebsocket");
 
@@ -104,7 +109,7 @@ const sendUpdateTileWebsocket = (socket, updatetile) => {
 		type: "board",
 		action: "updateTile",
 		payload: {
-			roomId: localStorage.getItem("roomId"),
+			gameId: localStorage.getItem("gameId"),
       senderId: localStorage.getItem("userId"),
       boardId: "board1", 
 			updateTile: updatetile
